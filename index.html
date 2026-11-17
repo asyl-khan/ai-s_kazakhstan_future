@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Казахстан 2100 — города будущего</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:#0b1020;color:#eaf0ff;line-height:1.5}
+header{text-align:center;padding:28px 16px 8px}h1{margin:0;font-size:clamp(26px,6vw,44px);background:linear-gradient(90deg,#4cc9f0,#ffd166);-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{margin:6px 0 0;color:#9fb0d8}main{max-width:960px;margin:auto;padding:12px 14px 40px}
+.row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0}
+button{font:inherit;cursor:pointer;border:1px solid #2a3768;background:#141c3a;color:#eaf0ff;padding:9px 14px;border-radius:999px;min-height:40px}
+button.on{background:#4cc9f0;color:#06101f;border-color:#4cc9f0;font-weight:600}
+.yr button{font-size:18px;padding:9px 22px}
+.stage{position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;border:1px solid #2a3768;box-shadow:0 10px 40px #0008;margin-top:6px}
+.stage svg,.stage img{position:absolute;inset:0;width:100%;height:100%}.stage img{object-fit:cover}
+.tag{position:absolute;left:12px;bottom:10px;background:#000a;padding:4px 12px;border-radius:999px;font-weight:600;font-size:clamp(13px,3.5vw,18px)}
+.card{background:#141c3a;border:1px solid #2a3768;border-radius:14px;padding:14px 16px;margin-top:14px}
+.card h2{margin:0 0 4px;font-size:20px}.card p{margin:4px 0;color:#c7d3f5}
+.pr{font-size:13px;color:#9fb0d8;background:#0b1020;border-radius:8px;padding:8px 10px;margin:8px 0;word-break:break-word}
+footer{text-align:center;color:#6f7fae;font-size:13px;margin-top:20px}
+.bl{animation:sp 5s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.v{animation:fl 6s ease-in-out infinite alternate}@keyframes fl{from{transform:translateX(-50px)}to{transform:translateX(50px)}}
+</style></head><body>
+<header><h1>Казахстан будущего</h1><p>Выбери год и город — смотри, как он может выглядеть</p></header>
+<main>
+<div class="row yr" id="yrs"></div>
+<div class="row" id="cts"></div>
+<div class="stage" id="stage"></div>
+<div class="card"><h2 id="ttl"></h2><p id="dsc"></p><p id="thm"></p>
+<div class="pr" id="prm"></div><button id="cp">Скопировать промпт для ИИ</button></div>
+<footer>Сцены нарисованы кодом. Свои ИИ-фото кладите в папку <b>img/</b> как <b>astana-2050.jpg</b> — сайт подставит их сам.</footer>
+</main>
+<script>
+const Y=[2050,2075,2100];
+const C=[
+{id:'astana',n:'Астана',e:'Astana',f:'a tall golden tower with a sphere, glass skyscrapers',t:'Столица с башнями, парками и скоростными линиями.',lm:'tower'},
+{id:'almaty',n:'Алматы',e:'Almaty',f:'snow-capped Tian Shan mountains behind the city',t:'Город у гор: чистый воздух, канатные дороги и сады на склонах.',mtn:1},
+{id:'shymkent',n:'Шымкент',e:'Shymkent',f:'sunny southern city with domes, fountains and oases',t:'Солнечный южный мегаполис с оазисами и фонтанами.',lm:'dome'},
+{id:'aktobe',n:'Ақтөбе',e:'Aktobe',f:'wind turbines on the steppe',t:'Промышленный центр, ставший образцом чистых технологий.',wind:1},
+{id:'karaganda',n:'Қарағанды',e:'Karaganda',f:'wind farms and green parks',t:'Бывшая угольная столица, превращённая в город зелёной энергии.',wind:1},
+{id:'taraz',n:'Тараз',e:'Taraz',f:'ancient mausoleums among modern gardens',t:'Древний город с историческими кварталами и современными садами.',lm:'dome'},
+{id:'pavlodar',n:'Павлодар',e:'Pavlodar',f:'Irtysh river embankment with clean power plants',t:'Город на Иртыше с набережными и энергетикой будущего.',river:1},
+{id:'semey',n:'Семей',e:'Semey',f:'Irtysh river, science and culture center with domes',t:'Город науки и культуры на берегу Иртыша.',river:1,lm:'dome'},
+{id:'kyzylorda',n:'Қызылорда',e:'Kyzylorda',f:'Syr Darya river, rice fields and a spaceport rocket',t:'Город на Сырдарье, где снова цветут сады и рисовые поля.',river:1,lm:'rocket'},
+{id:'atyrau',n:'Атырау',e:'Atyrau',f:'Ural river and Caspian coast with wind turbines',t:'Город на Урале и Каспии с дамбами и плавучими кварталами.',river:1,wind:1}];
+const D=[
+['Города растут вокруг зелёных кварталов: солнечные панели на крышах, электробусы, скоростные поезда.','eco-friendly modern architecture, solar panels, electric buses, green parks'],
+['Умные районы: беспилотный транспорт, вертикальные сады, воздушное такси.','smart city, autonomous vehicles, vertical gardens, flying taxis'],
+['Города-сады с куполами и парящим транспортом. Чистая энергия, природа вернулась.','futuristic garden city, glass domes, floating transport, clean energy, lush nature']];
+let ci=0,yi=0;
+const $=i=>document.getElementById(i);
+function hash(s){let h=7;for(const c of s)h=h*31+c.charCodeAt(0)|0;return h}
+function scene(c,yi){
+let s=hash(c.id)+yi*97;const r=()=>{s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const sk=[['#2b4a7a','#ff9a5a'],['#1f6f8b','#c77dff'],['#150b3a','#4cc9f0']][yi];
+let o=`<svg viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sk[0]}"/><stop offset="1" stop-color="${sk[1]}"/></linearGradient><linearGradient id="bd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d6e4ff"/><stop offset="1" stop-color="#5b74a8"/></linearGradient><pattern id="wn" width="8" height="10" patternUnits="userSpaceOnUse"><rect x="2" y="2" width="3" height="4" fill="#ffe08a"/></pattern></defs><rect width="800" height="450" fill="url(#sk)"/>`;
+if(yi==2)for(let i=0;i<45;i++)o+=`<circle cx="${r()*800}" cy="${r()*200}" r="${r()*1.6+.4}" fill="#fff"/>`;
+o+=`<circle cx="620" cy="120" r="${yi==2?55:38}" fill="#ffe9a8" opacity=".9"/>`;
+if(c.mtn)o+=`<polygon points="0,300 120,170 230,280 350,140 480,290 610,170 800,300 800,370 0,370" fill="#3b4a6b" opacity=".85"/><polygon points="350,140 325,175 350,165 372,178" fill="#fff"/><polygon points="120,170 100,200 122,192 140,203" fill="#fff"/>`;
+o+=`<rect y="360" width="800" height="90" fill="#173a2b"/>`;
+if(c.river)o+=`<path d="M0 395 Q200 372 400 400 T800 388 L800 430 Q600 448 400 425 T0 432Z" fill="#38bdf8" opacity=".8"/>`;
+const n=12+yi*5;
+for(let i=0;i<n;i++){const w=26+r()*30,h=60+r()*(70+yi*75),x=i*(800/n)+r()*8,y=360-h,rx=yi==2?w/2:2;
+o+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="url(#bd)"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="url(#wn)" opacity=".8"/>`;
+if(yi>=1)o+=`<rect x="${x}" y="${y-5}" width="${w}" height="6" fill="#4ade80"/>`;else o+=`<rect x="${x+w/2-1}" y="${y-14}" width="2" height="14" fill="#cbd5e1"/>`}
+if(c.lm=='tower')o+=`<rect x="395" y="120" width="10" height="240" fill="#e8c36a"/><circle cx="400" cy="118" r="26" fill="#ffd166" stroke="#fff6" stroke-width="3"/>`;
+if(c.lm=='rocket')o+=`<rect x="392" y="170" width="16" height="130" rx="4" fill="#f1f5f9"/><polygon points="392,172 400,130 408,172" fill="#f87171"/><polygon points="392,290 380,312 392,300" fill="#f87171"/><polygon points="408,290 420,312 408,300" fill="#f87171"/><polygon points="393,300 407,300 400,345" fill="#fbbf24" opacity=".9"/>`;
+if(c.lm=='dome')o+=`<path d="M335 360 A65 65 0 0 1 465 360Z" fill="#7dd3fc" stroke="#fff" stroke-width="3" opacity=".95"/><rect x="326" y="270" width="8" height="90" fill="#e2e8f0"/><rect x="466" y="270" width="8" height="90" fill="#e2e8f0"/>`;
+for(let i=0;i<10+yi*10;i++)o+=`<circle cx="${r()*800}" cy="${356+r()*6}" r="${6+r()*9}" fill="${r()>.5?'#22c55e':'#15803d'}"/>`;
+if(c.wind)for(let k=0;k<3+yi;k++){const x=40+k*70+(k>2?560:0),y=250;o+=`<rect x="${x-1.5}" y="${y}" width="3" height="110" fill="#e2e8f0"/><g transform="translate(${x},${y})"><g class="bl"><path d="M0 0V-38M0 0L33 19M0 0L-33 19" stroke="#fff" stroke-width="3" stroke-linecap="round"/></g></g>`}
+if(yi>=1)for(let i=0;i<4+yi*4;i++){const x=r()*740+30,y=50+r()*190;o+=`<g class="v" style="animation-duration:${4+r()*5}s"><ellipse cx="${x}" cy="${y}" rx="${10+yi*3}" ry="4" fill="#fff"/><ellipse cx="${x}" cy="${y+5}" rx="${14+yi*3}" ry="3" fill="#7df9ff" opacity=".6"/></g>`}
+return o+'</svg>'}
+function draw(){
+const c=C[ci],y=Y[yi];
+$('stage').innerHTML=scene(c,yi)+`<img src="img/${c.id}-${y}.jpg" alt="${c.n} ${y}" onerror="this.remove()"><div class="tag">${c.n} · ${y}</div>`;
+$('ttl').textContent=`${c.n}, ${y} год`;$('dsc').textContent=D[yi][0];$('thm').textContent=c.t;
+$('prm').textContent=`Photorealistic photo of ${c.e}, Kazakhstan in the year ${y}: ${c.f}, ${D[yi][1]}, golden hour, ultra detailed, 16:9`;
+document.querySelectorAll('#yrs button').forEach((b,i)=>b.classList.toggle('on',i==yi));
+document.querySelectorAll('#cts button').forEach((b,i)=>b.classList.toggle('on',i==ci))}
+Y.forEach((y,i)=>{const b=document.createElement('button');b.textContent=y;b.onclick=()=>{yi=i;draw()};$('yrs').append(b)});
+C.forEach((c,i)=>{const b=document.createElement('button');b.textContent=c.n;b.onclick=()=>{ci=i;draw()};$('cts').append(b)});
+$('cp').onclick=async()=>{try{await navigator.clipboard.writeText($('prm').textContent);$('cp').textContent='Скопировано ✓'}catch(e){$('cp').textContent='Выдели текст и скопируй'}setTimeout(()=>$('cp').textContent='Скопировать промпт для ИИ',2000)};
+draw();
+</script></body></html>
